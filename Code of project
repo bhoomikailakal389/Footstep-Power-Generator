@@ -1,0 +1,89 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+// Initialize I2C LCD (adjust address if necessary, typically 0x27 or 0x3F)
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+// Pin Definitions
+const int piezoPin = A0;  // Analog pin connected to piezo sensors
+const int ledPin = 9;     // Digital pin connected to LED
+
+// Variables
+int stepCount = 0;        // Counter for piezo presses (steps)
+float voltage = 0.0;      // Voltage from piezo sensors
+float threshold = 2.5;    // Voltage threshold to detect a step
+
+void setup() {
+  // Initialize Serial Monitor
+  Serial.begin(9600);
+
+  // Initialize I2C LCD
+  lcd.begin();
+  lcd.backlight();
+
+  // Initialize LED pin
+  pinMode(ledPin, OUTPUT);
+
+  // Display welcome message on LCD
+  lcd.setCursor(0, 0);
+  lcd.print("Foot Power");
+  lcd.setCursor(0, 1);
+  lcd.print("Generation");
+  delay(3000); // Wait for 3 seconds
+  lcd.clear();
+
+  // Initial Serial Monitor Message
+  Serial.println("Foot Power Generation Initialized");
+  Serial.println("Step Count: 0, Voltage: 0.00V");
+
+  // Initial LCD Display
+  lcd.setCursor(0, 0);
+  lcd.print("Step Count: 0");
+  lcd.setCursor(0, 1);
+  lcd.print("Voltage: 0.00V");
+}
+
+void loop() {
+  // Read the analog value from the piezo sensors
+  int piezoValue = analogRead(piezoPin);
+  voltage = piezoValue * (5.0 / 1023.0); // Convert ADC value to voltage
+
+  // Check if voltage exceeds the threshold
+  if (voltage > threshold) {
+    stepCount++; // Increment the step count
+
+    // Turn on the LED
+    digitalWrite(ledPin, HIGH);
+    delay(100); // Short delay for visibility
+    digitalWrite(ledPin, LOW);
+
+    // Update Serial Monitor
+    Serial.print("Step Count: ");
+    Serial.print(stepCount);
+    Serial.print(", Voltage: ");
+    Serial.print(voltage, 2); // Display voltage with 2 decimal places
+    Serial.println("V");
+
+    // Update LCD display
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Step Count: ");
+    lcd.print(stepCount);
+    lcd.setCursor(0, 1);
+    lcd.print("Voltage: ");
+    lcd.print(voltage, 2); // Display voltage with 2 decimal places
+    lcd.print("V");
+
+    // Debounce delay
+    delay(500);
+  } else {
+    // Keep displaying the current step count and voltage
+    lcd.setCursor(0, 0);
+    lcd.print("Step Count: ");
+    lcd.print(stepCount);
+    lcd.setCursor(0, 1);
+    lcd.print("Voltage: ");
+    lcd.print(voltage, 2);
+    lcd.print("V");
+  }
+}
